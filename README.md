@@ -11,6 +11,10 @@ or request/response filtering.
 ## Documentation
 The API documentation can be found at [the github pages](https://michaelkrone.github.io/cabr).
 
+## Installation
+```bash
+$ npm install --save-dev cabr
+```
 
 ## Example usage
 ```js
