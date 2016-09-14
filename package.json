@@ -1,7 +1,7 @@
 {
   "name": "cabr",
-  "version": "0.0.0",
-  "description": "A bunch of RBAC express middlewares, allowing to filter objects based on permissions or attributes.",
+  "version": "0.0.1",
+  "description": "A module for handling RBAC-A in an express environment.",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/xo index.js ./lib/** && ./node_modules/.bin/ava",
@@ -9,7 +9,7 @@
     "watch": "NODE_DEBUG=cabr ./node_modules/.bin/ava --watch",
     "docs": "./node_modules/.bin/jsdoc ./lib ./README.md -d docs"
   },
-  "readme": "README.md",
+  "readme": "./README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/michaelkrone/cabr.git"
