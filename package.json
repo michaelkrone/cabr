@@ -1,0 +1,53 @@
+{
+  "name": "cabr",
+  "version": "0.0.0",
+  "description": "A bunch of RBAC express middlewares, allowing to filter objects based on permissions or attributes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/xo index.js ./lib/** && ./node_modules/.bin/ava",
+    "lint": "./node_modules/.bin/xo index.js ./lib/**",
+    "watch": "NODE_DEBUG=cabr ./node_modules/.bin/ava --watch",
+    "docs": "./node_modules/.bin/jsdoc ./lib ./README.md -d docs"
+  },
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelkrone/cabr.git"
+  },
+  "homepage": "https://michaelkrone.github.io/cabr",
+  "keywords": [
+    "RBAC",
+    "RBAC-A",
+    "express",
+    "connect",
+    "middleware",
+    "response",
+    "filter",
+    "object",
+    "filter",
+    "permissions",
+    "roles",
+    "attributes",
+    "access",
+    "rights"
+  ],
+  "author": "Michael Krone",
+  "license": "MIT",
+  "devDependencies": {
+    "ava": "^0.16.0",
+    "express": "^4.14.0",
+    "jsdoc": "^3.4.0",
+    "supertest": "^2.0.0",
+    "xo": "^0.16.0"
+  },
+  "ava": {
+    "concurrency": 4,
+    "failFast": true
+  },
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "express-mung": "^0.4.2",
+    "lodash": "^4.15.0",
+    "rbac-a": "^0.2.5"
+  }
+}
