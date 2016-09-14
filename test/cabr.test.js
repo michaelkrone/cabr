@@ -17,15 +17,18 @@ function setUserMiddleware(username) {
 test.beforeEach(t => {
 	t.context.rules = {
 		roles: {
-			guest: {},
+			guest: {
+				permissions: ['create'],
+				attributes: ['attributeDeny']
+			},
 			reader: {
 				permissions: ['read'],
-				inherited: ['guest']
+				inherited: ['guest'],
 			},
 			writer: {
 				permissions: ['create'],
 				inherited: ['reader'],
-				attributes: ['attribute']
+				attributes: ['attribute1', 'attribute2']
 			},
 			editor: {
 				permissions: ['update'],
@@ -49,7 +52,9 @@ test.beforeEach(t => {
 
 	const provider = new RBAC.providers.JsonProvider(t.context.rules);
 	t.context.rbac = new RBAC({provider});
-	t.context.rbac.attributes.set(attribute);
+	t.context.rbac.attributes.set(attributeDeny);
+	t.context.rbac.attributes.set(attribute1);
+	t.context.rbac.attributes.set(attribute2);
 
 	const get = req => req.user;
 	t.context.cabr = new CABR(t.context.rbac, {
@@ -57,11 +62,22 @@ test.beforeEach(t => {
 		userProvider: {get: (req) => Promise.resolve(req.user)}
 	});
 
-	function attribute(user, role, param) {
-		if (param.body) {
-			param.body.seen = true;
+	function attribute1(user, role, params) {
+		if (params.body) {
+			params.body.seen1 = params.res.cabr;
 		}
-		return Promise.resolve(param.body);
+		return true;
+	}
+
+	function attribute2(user, role, params) {
+		if (params.res.cabr) {
+			params.body.seen2 = true;
+		}
+		return Promise.resolve(true);
+	}
+
+	function attributeDeny(user, role, params) {
+		return false;
 	}
 });
 
@@ -128,24 +144,14 @@ test('cabr denies access to a route', async t => {
 	app.all('*', setUserMiddleware('dummy'))
 
 	t.context.cabr.registerApp(app)
-		.use('/pets', (req, res, next) => res.sendStatus(200));
+		.use('/pets', (req, res) => res.status(200).json({ a: 'a' }));
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 401);
+	t.false(res.body.hasOwnProperty('a'));
 });
 
 test('cabr allows access to a route', async t => {
-	const app = express();
-	app.all('*', setUserMiddleware('tummy'));
-
-	t.context.cabr.registerApp(app)
-		.use('/pets', (req, res, next) => res.sendStatus(200));
-
-	const res = await supertest(app).get('/pets');
-	t.deepEqual(res.status, 200);
-});
-
-test.skip('cabr performs response transformation', async t => {
 	const app = express();
 	app.all('*', setUserMiddleware('tummy'));
 
@@ -154,5 +160,36 @@ test.skip('cabr performs response transformation', async t => {
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 200);
-	t.deepEqual(res.body, true);
+	t.true(res.body.hasOwnProperty('a'));
+	t.deepEqual(res.body.a, 'a');
+});
+
+test('cabr performs response transformation', async t => {
+	const app = express();
+	app.all('*', setUserMiddleware('tummy'));
+
+	t.context.cabr.registerApp(app)
+		.use('/pets', (req, res) => res.status(200).json({ a: 'a' }));
+
+	const res = await supertest(app).get('/pets');
+	t.deepEqual(res.status, 200);
+	t.true(typeof res.body === 'object');
+	t.true(res.body.hasOwnProperty('a'));
+	t.deepEqual(res.body.a, 'a');
+	t.true(res.body.hasOwnProperty('seen1'));
+	t.true(res.body.seen1);
+	t.true(res.body.hasOwnProperty('seen2'));
+	t.true(res.body.seen2);
+});
+
+test('cabr denies if an attribute denies', async t => {
+	const app = express();
+	app.all('*', setUserMiddleware('dummy'));
+
+	t.context.cabr.registerApp(app)
+		.use('/pets', (req, res) => res.status(200).json({ a: 'a' }));
+
+	const res = await supertest(app).get('/pets');
+	t.deepEqual(res.status, 401);
+	t.false(res.body.hasOwnProperty('a'));
 });
