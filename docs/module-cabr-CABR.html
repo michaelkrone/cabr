@@ -171,7 +171,7 @@
 
         <tr>
             
-                <td class="name"><code>provider</code></td>
+                <td class="name"><code>userProvider</code></td>
             
 
             <td class="type">
@@ -231,23 +231,24 @@ request to determine the current user. Defaults to the provider of the passed rb
 
             
 
-            <td class="description last">An object of regular expression strings mapped to a string or array of
-strings. See the <a href="https://github.com/yanickrochon/rbac-a#grouped-permissions">RBAC-A Grouped permissions syntax</a>
-for examples of valid permission configurations. The keys are used as regular expressions to determine if
-a route configuration applies for the current request.</td>
+            <td class="description last">An object of regular expression strings mapped to a string or array of strings
+(see the <a href="https://github.com/yanickrochon/rbac-a#grouped-permissions">RBAC-A Grouped permissions syntax</a>),
+or an object with keys defining HTTP methods (upper or lowercase) mapped to a permission syntax string or array.
+The keys of the route object are used as regular expressions to determine if a route configuration applies for
+the current request.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>userProvider</code></td>
+                <td class="name"><code>unauthorizedHandler</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type">function</span>
 
 
             
@@ -267,8 +268,8 @@ a route configuration applies for the current request.</td>
 
             
 
-            <td class="description last">Provides an optional userProvider which get method will be called with the request
-object.</td>
+            <td class="description last">A middleware function that is called if a permission or attribute
+validation failed.</td>
         </tr>
 
     
@@ -352,19 +353,24 @@ const routes = {
 	// every route, every HTTP method needs the awesome permission
 	'.*': 'awesome',
 
-	// every route, every HTTP method needs the awesome and funky permission
-	'^\/funky': ['awesome', 'funky'],
+	// every route, every HTTP method needs the 'awesome', yolo' and 'funky' permission
+	'^\/funky': ['yolo', 'funky'],
 
 	// every route, every HEAD request needs the 'clever' and 'smart' permission
+	// plus the 'awesome' permission
 	'.*': {HEAD: ['clever', 'smart']}, // or 'clever &amp;&amp; smart'
 
-	// ALL HTTP methods for '/pets' will be checked with the 'pets.read' permission
+	// every route, every COPY request needs the either the 'clever' or 'smart' permission
+	// plus the 'awesome' permission
+	'.*': {COPY: 'clever || smart']},
+
+	// ALL HTTP methods for '/pets' will be checked with the 'pets.read'
+	// permission and 'awesome' permissions
 	'\/pets': 'pets.read',
 
 	// Custom config for '/cats', different HTTP methods
 	// will apply different permissions
 	'\/pets\/cats': {GET: 'pets.read', POST: 'cats.create', DELETE: ['pets.create', 'pets.delete']},
-
 };
 
 // init the cabr instance
@@ -470,7 +476,8 @@ res param, any additional params can be feed with the params parameter.
 
             
 
-            <td class="description last">Array of permissions that should be checked</td>
+            <td class="description last">Array of permissions or permission syntax strings that
+should be checked for this route.</td>
         </tr>
 
     
@@ -498,7 +505,7 @@ res param, any additional params can be feed with the params parameter.
 
             
 
-            <td class="description last">Additional params to be applied to the attribute validation</td>
+            <td class="description last">Additional params to be passed to the attribute validation, beside req and res.</td>
         </tr>
 
     
@@ -539,7 +546,7 @@ res param, any additional params can be feed with the params parameter.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line151">line 151</a>
+        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line157">line 157</a>
     </li></ul></dd>
     
 
@@ -602,11 +609,12 @@ calls the options unauthorizedHandler otherwise.
 <div class="description">
     Register an <a href="http://expressjs.com/en/4x.html#app">express app</a>
 on this CABR instance. All mapped requests will be validated with the configured
-RBAC-A permissions. For all configured attributes of a request/response, the
-RBAC-A attribute function will be called with request and response for attributes configured
-as pre hanlders and request, respNODE_DEBUG=cabr onse and body for after filters, after all other middleware
-has been called. This method must be called before any route handling middleware is
-registered that modifies the response body!
+RBAC-A permissions. For all attributes of a role, the RBAC-A attribute function
+will be called with params.req: request and params.res: response for request validation, and
+additionally params.body for response validation and manipulation, after all other middleware
+has been called. The registerApp method must be called before any route handling middleware is
+registered that modifies the response body, also note that it may cause errors if the response
+body object is dereferenced in an attribute function!
 </div>
 
 
@@ -699,7 +707,7 @@ registered that modifies the response body!
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line109">line 109</a>
+        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line116">line 116</a>
     </li></ul></dd>
     
 
@@ -742,14 +750,14 @@ const cabredApp = cabr.registerApp(express());</code></pre>
 
     
 
-    <h4 class="name" id="registerRoute"><span class="type-signature"></span>registerRoute<span class="signature">(route, methods, permissions)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="registerRoute"><span class="type-signature"></span>registerRoute<span class="signature">(route, permissions)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Add a route configuration at runtime.CABR supports dynamically building the route
+    Add a route configuration at runtime. CABR supports dynamically building the route
 configuration.
 </div>
 
@@ -809,33 +817,6 @@ configuration.
 
         <tr>
             
-                <td class="name"><code>methods</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;String></span>
-|
-
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Array of strings of HTTP method names or a single method
-as a string, '*' servers as a wildcard for all HTTP methods</td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>permissions</code></td>
             
 
@@ -849,6 +830,9 @@ as a string, '*' servers as a wildcard for all HTTP methods</td>
 |
 
 <span class="param-type">String</span>
+|
+
+<span class="param-type">Object</span>
 
 
             
@@ -858,8 +842,9 @@ as a string, '*' servers as a wildcard for all HTTP methods</td>
 
             
 
-            <td class="description last"><a href="https://github.com/yanickrochon/rbac-a#grouped-permissions">RBAC-A Grouped permissions syntax</a>
-compatible object</td>
+            <td class="description last">The permission object. The same formats as for the route
+options are supported. Also see the
+<a href="https://github.com/yanickrochon/rbac-a#grouped-permissions">RBAC-A Grouped permissions syntax</a>.</td>
         </tr>
 
     
@@ -900,7 +885,7 @@ compatible object</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line127">line 127</a>
+        <a href="cabr.js.html">cabr.js</a>, <a href="cabr.js.html#line132">line 132</a>
     </li></ul></dd>
     
 
@@ -927,7 +912,7 @@ compatible object</td>
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>cabr.registerRoute('/api', {GET: 'read', POST: 'create'});</code></pre>
+    <pre class="prettyprint"><code>cabr.registerRoute('\/api', {GET: 'read', POST: 'create'});</code></pre>
 
 
 
@@ -953,7 +938,7 @@ compatible object</td>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.1</a> on Wed Sep 14 2016 13:07:46 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 14 2016 22:06:07 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>
