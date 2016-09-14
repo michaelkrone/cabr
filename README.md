@@ -58,8 +58,55 @@ const cabr = new CABR(rbac, {routes});
 const get = (req) => Promise.resolve(req.user);
 cabr = new CABR(rbac, {routes, userProvider: {get}});
 
-// register the express app all request will be validated by
+// register the express app - all request will be validated by
 // the permissions defined in the route config
 cabr.registerApp(app);
 
 ```
+
+## A request/response loop
+A request is first validated against all matching permissions and attributes. To get the roles
+of the specific user, the `options.userProvider.get` method will be called with the current request
+object to get the identifier the registered rbac.provider can be queried with to get the role
+information for a user. Whut? Example:
+```js
+// in the rbac mapping
+{
+	...
+	 "users": {
+		"1": ["writer"],
+		"2": ["admin"]
+	}
+}
+
+// assume this returns 1 or 2
+const userProvider = req => req.user._id;
+```
+Of course you can use any other logic in your providers. You might also return a promise, resolving the username.
+If any permission validation fails, the `options.unauthorizedHandler` middleware will be called with the
+failing permission attached to the request object as `rbacFailed`. The registered attribute functions of
+the role will be called with the user/userId, the user role and an object consisting of the keys
+
+- `req` - the current request object, req.cabr is set to true
+- `res` - the current response object, res.cabr is undefined
+- `permissions` - the permissions applied for this route
+
+   If any additional params are passed as an object to the `guard` middleware, these parameters will be available
+in the attribute validation function as well.
+
+If any attribute function returns or resolves to a falsy value, the the `options.unauthorizedHandler` is called
+with the `rbacFailed` property of the request object set to the failing attribute name.
+
+After that, all registered middlewares are applied. Then, all attribute functions of a role are called again
+with the user/userId, the user role and an object consisting of the keys
+
+- `req` - the current request object, req.cabr is undefined
+- `res` - the current response object, res.cabr is set to true
+- `permissions` - the permissions applied for this route
+- `body` - the response body, which may be mutated/filtered by the attribute functions
+
+   Note that you should not dereference the request body, since this may cause errors. Note that this does only
+   work for json responses, and if no response has been send already.
+
+If any attribute validation fails, the `options.unauthorizedHandler` middleware will be called, with an error handler
+passed as the next function. Otherwise the mutated json response is send.
