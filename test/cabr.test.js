@@ -157,11 +157,12 @@ test.skip('cabr performs response transformation', async t => {
 
 	t.context.cabr.registerApp(app)
 		.use('/pets', (req, res, next) => {
+			res.json({data: 'yes'});
 			res.sendStatus(200);
 			return next();
 		});
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 200);
-	t.deepEqual(res.body, true);
+	t.deepEqual(res.body.seen, true);
 });
