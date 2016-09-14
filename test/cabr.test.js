@@ -128,10 +128,7 @@ test('cabr denies access to a route', async t => {
 	app.all('*', setUserMiddleware('dummy'))
 
 	t.context.cabr.registerApp(app)
-		.use('/pets', (req, res, next) => {
-			res.sendStatus(200);
-			return next();
-		});
+		.use('/pets', (req, res, next) => res.sendStatus(200));
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 401);
@@ -142,10 +139,7 @@ test('cabr allows access to a route', async t => {
 	app.all('*', setUserMiddleware('tummy'));
 
 	t.context.cabr.registerApp(app)
-		.use('/pets', (req, res, next) => {
-			res.sendStatus(200);
-			return next();
-		});
+		.use('/pets', (req, res, next) => res.sendStatus(200));
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 200);
@@ -156,13 +150,9 @@ test.skip('cabr performs response transformation', async t => {
 	app.all('*', setUserMiddleware('tummy'));
 
 	t.context.cabr.registerApp(app)
-		.use('/pets', (req, res, next) => {
-			res.json({data: 'yes'});
-			res.sendStatus(200);
-			return next();
-		});
+		.use('/pets', (req, res) => res.status(200).json({ a: 'a' }));
 
 	const res = await supertest(app).get('/pets');
 	t.deepEqual(res.status, 200);
-	t.deepEqual(res.body.seen, true);
+	t.deepEqual(res.body, true);
 });
