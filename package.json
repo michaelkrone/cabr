@@ -1,6 +1,6 @@
 {
   "name": "cabr",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A module for handling RBAC-A in an express environment.",
   "main": "index.js",
   "scripts": {
