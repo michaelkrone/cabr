@@ -15,7 +15,7 @@ The API documentation can be found at [the github pages](https://michaelkrone.gi
 
 ## Installation
 ```bash
-$ npm install --save-dev cabr
+$ npm install --save cabr
 ```
 
 ## Example usage
