@@ -1,5 +1,7 @@
 # cabr
 
+[![Known Vulnerabilities](https://snyk.io/test/npm/cabr/badge.svg)](https://snyk.io/test/npm/cabr)
+
 A module for handling RBAC-A in an express environment.
 
 The CABR class provides rbac-a support for express/connect
