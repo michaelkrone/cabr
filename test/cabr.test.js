@@ -33,21 +33,25 @@ test.beforeEach(t => {
 			editor: {
 				permissions: ['update'],
 				inherited: ['reader']
+			},
+			someone: {
+				permissions: ['update']
 			}
 		},
 		users: {
 			dummy: ['guest'],
 			plummy: ['reader'],
 			tummy: ['reader', 'writer'],
-			yummy: ['writer', 'editor']
+			yummy: ['writer', 'editor'],
+			zummy: ['someone']
 		}
 	};
 
 	t.context.map = {
 		'.*': 'read',
-	 	'\/pets': 'create',
-	 	'\/pets\/cats': ['create', 'update'],
-		'\/pets\/dogs': {get: 'create', post: ['sniff', 'wuff']}
+	 	'^\\/pets$': 'create',
+	 	'^\\/pets\\/cats$': ['create', 'update'],
+		'^\\/pets\\/dogs$': {get: 'create', post: ['sniff', 'wuff']}
 	};
 
 	const provider = new RBAC.providers.JsonProvider(t.context.rules);
@@ -97,42 +101,40 @@ test('cabr creates a new instance with the correct arguments', t => {
 });
 
 test('cabr adds a bunch of http methods to the request map if not specified in the permissions', t => {
-	const testKeys = ['.*', '\/pets'];
-	httpMethods.map(m => testKeys.map(k => {
-		m = m.toUpperCase();
-		t.truthy(t.context.cabr.map[k][m]);
-		t.deepEqual(t.context.cabr.map[k][m], [t.context.map[k]]);
-	}));
+	const entry = t.context.cabr.map.find(r => r.route === '.*');
+	httpMethods.map(m => t.truthy(entry[m.toUpperCase()]));
 });
 
 test('cabr adds permission arrays', t => {
-	const key = '\/pets\/cats';
+	const entry = t.context.cabr.map.find(r => r.route === '^\\/pets\\/cats$');
 	httpMethods.map(m => {
 		m = m.toUpperCase();
-		t.truthy(t.context.cabr.map[key][m]);
-		t.deepEqual(t.context.cabr.map[key][m], _.toArray(t.context.map[key]));
+		t.truthy(entry[m.toUpperCase()]);
+		t.deepEqual(entry[m.toUpperCase()], ['create', 'update']);
 	});
 });
 
 test('cabr adds permission objects with uppercased http methods', t => {
-	const key = '\/pets\/dogs';
+	const entry = t.context.cabr.map.find(r => r.route === '^\\/pets\\/dogs$');
 	['GET', 'POST'].map(m => {
-		const p = t.context.map[key][m.toLowerCase()];
+		const p = entry[m];
 		const expected = _.isArray(p) ? p : [p];
-		t.truthy(t.context.cabr.map[key][m]);
-		t.deepEqual(t.context.cabr.map[key][m], expected);
+		t.truthy(entry[m]);
+		t.deepEqual(entry[m], expected);
 	});
 });
 
 test('cabr provides a function to register a handler for a route', t => {
 	t.true(typeof t.context.cabr.registerRoute === 'function');
 	t.context.cabr.registerRoute('/new', 'wow!');
-	t.truthy(t.context.cabr.map['/new']);
-	t.deepEqual(t.context.cabr.map['/new'].POST, ['wow!']);
+	const entry1 = t.context.cabr.map.find(r => r.route === '/new');
+	t.truthy(entry1);
+	t.deepEqual(entry1.POST, ['wow!']);
 
 	t.context.cabr.registerRoute('/old', {gEt: 'boah!'});
-	t.truthy(t.context.cabr.map['/old']);
-	t.deepEqual(t.context.cabr.map['/old'].GET, ['boah!']);
+	const entry2 = t.context.cabr.map.find(r => r.route === '/old');
+	t.truthy(entry2);
+	t.deepEqual(entry2.GET, ['boah!']);
 });
 
 test('cabr provides a function to register an express app', t => {
@@ -141,7 +143,7 @@ test('cabr provides a function to register an express app', t => {
 
 test('cabr denies access to a route', async t => {
 	const app = express();
-	app.all('*', setUserMiddleware('dummy'))
+	app.all('*', setUserMiddleware('zummy'))
 
 	t.context.cabr.registerApp(app)
 		.use('/pets', (req, res) => res.status(200).json({ a: 'a' }));
