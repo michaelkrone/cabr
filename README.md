@@ -32,8 +32,8 @@ const routes = {
 	// every route, every HTTP method needs the awesome permission
 	'.*': 'awesome',
 
-	// every route, every HTTP method needs the 'awesome', yolo' and 'funky' permission
-	'^\/funky': ['yolo', 'funky'],
+	// the funky route, every HTTP method needs the 'awesome', yolo' and 'funky' permission
+	'^\\/funky$': ['yolo', 'funky'],
 
 	// every route, every HEAD request needs the 'clever' and 'smart' permission
 	// plus the 'awesome' permission
@@ -41,15 +41,15 @@ const routes = {
 
 	// every route, every COPY request needs the either the 'clever' or 'smart' permission
 	// plus the 'awesome' permission
-	'.': {COPY: 'clever || smart']},
+	'.*': {COPY: 'clever || smart']},
 
 	// ALL HTTP methods for '/pets' will be checked with the 'pets.read'
 	// permission and 'awesome' permissions
-	'\/pets': 'pets.read',
+	'^\\/pets$': 'pets.read',
 
 	// Custom config for '/cats', different HTTP methods
 	// will apply different permissions
-	'\/pets\/cats': {GET: 'pets.read', POST: 'cats.create', DELETE: ['pets.create', 'pets.delete']},
+	'^\\/pets\\/cats$': {GET: 'pets.read', POST: 'cats.create', DELETE: ['pets.create', 'pets.delete']}
 };
 
 // init the cabr instance
