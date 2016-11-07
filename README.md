@@ -1,6 +1,7 @@
 # cabr
 
 [![Known Vulnerabilities](https://snyk.io/test/npm/cabr/badge.svg)](https://snyk.io/test/npm/cabr)
+[![Build Status](https://travis-ci.org/michaelkrone/cabr.svg?branch=master)](https://travis-ci.org/michaelkrone/cabr)
 
 A module for handling RBAC-A in an express environment.
 
